@@ -8,7 +8,7 @@ android {
 
     defaultConfig {
         applicationId "com.github.mag0716.compose.foregroundservicelaunchrestrictionssample"
-        minSdkVersion 23
+        minSdkVersion 26
         targetSdkVersion 'S'
         versionCode 1
         versionName "1.0"
