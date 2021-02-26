@@ -1,10 +1,18 @@
 package com.github.mag0716.compose.foregroundservicelaunchrestrictionssample
 
 import android.os.Bundle
+import android.util.Log
 import android.widget.Button
 import androidx.appcompat.app.AppCompatActivity
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 class MainActivity : AppCompatActivity() {
+
+    companion object {
+        const val TAG = "ForegroundServiceRestriction"
+    }
 
     private lateinit var startForegroundServiceButton: Button
 
@@ -14,8 +22,20 @@ class MainActivity : AppCompatActivity() {
 
         startForegroundServiceButton = findViewById(R.id.startForegroundServiceButton)
         startForegroundServiceButton.setOnClickListener {
-            val intent = LoggingService.createService(this, 15000)
-            startForegroundService(intent)
+            startForegroundService()
+        }
+    }
+
+    private fun startForegroundService() {
+        // 実装を簡略化するためにGlobalScopeを利用
+        GlobalScope.launch {
+            delay(5000)
+            try {
+                val intent = LoggingService.createService(applicationContext, 15000)
+                startForegroundService(intent)
+            } catch(exception : Exception) {
+                Log.w(TAG, "failed startForegroundService", exception)
+            }
         }
     }
 }

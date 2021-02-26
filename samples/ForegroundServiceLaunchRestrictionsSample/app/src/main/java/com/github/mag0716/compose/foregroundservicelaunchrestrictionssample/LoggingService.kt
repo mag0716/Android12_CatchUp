@@ -9,12 +9,12 @@ import android.content.Intent
 import android.os.IBinder
 import android.util.Log
 import androidx.core.app.NotificationCompat
+import com.github.mag0716.compose.foregroundservicelaunchrestrictionssample.MainActivity.Companion.TAG
 import kotlinx.coroutines.*
 
 class LoggingService : Service() {
 
     companion object {
-        private const val TAG = "LoggingService"
         private const val NOTIFICATION_ID = 1
         private const val CHANNEL_ID = "Foreground Service Channel"
         private const val KEY_DELAY = "Delay"
