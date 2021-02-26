@@ -7,7 +7,7 @@ android {
     compileSdkVersion 'android-S'
 
     defaultConfig {
-        applicationId "com.github.mag0716.compose.foregroundservicelaunchrestrictionssample"
+        applicationId "com.github.mag0716.foregroundservicelaunchrestrictionssample"
         minSdkVersion 26
         targetSdkVersion 'S'
         versionCode 1

@@ -1,4 +1,4 @@
-package com.github.mag0716.compose.foregroundservicelaunchrestrictionssample
+package com.github.mag0716.foregroundservicelaunchrestrictionssample
 
 import android.os.Bundle
 import android.util.Log
@@ -33,7 +33,7 @@ class MainActivity : AppCompatActivity() {
             try {
                 val intent = LoggingService.createService(applicationContext, 15000)
                 startForegroundService(intent)
-            } catch(exception : Exception) {
+            } catch (exception: Exception) {
                 Log.w(TAG, "failed startForegroundService", exception)
             }
         }

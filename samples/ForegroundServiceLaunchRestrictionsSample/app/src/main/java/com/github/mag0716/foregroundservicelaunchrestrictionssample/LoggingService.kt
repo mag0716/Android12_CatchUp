@@ -1,4 +1,4 @@
-package com.github.mag0716.compose.foregroundservicelaunchrestrictionssample
+package com.github.mag0716.foregroundservicelaunchrestrictionssample
 
 import android.app.Notification
 import android.app.NotificationChannel
@@ -9,7 +9,7 @@ import android.content.Intent
 import android.os.IBinder
 import android.util.Log
 import androidx.core.app.NotificationCompat
-import com.github.mag0716.compose.foregroundservicelaunchrestrictionssample.MainActivity.Companion.TAG
+import com.github.mag0716.foregroundservicelaunchrestrictionssample.MainActivity.Companion.TAG
 import kotlinx.coroutines.*
 
 class LoggingService : Service() {
