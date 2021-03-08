@@ -1,7 +1,9 @@
 package com.github.mag0716.unifiedapisample
 
+import android.graphics.ImageDecoder
 import android.graphics.drawable.BitmapDrawable
 import android.net.Uri
+import android.os.Build
 import android.provider.MediaStore
 import android.util.Log
 import android.view.View
@@ -39,12 +41,22 @@ class ImageContentReceiver : OnReceiveContentListener {
 
     private fun insertImage(editText: EditText, uri: Uri) {
         val context = editText.context
-        val bitmap = MediaStore.Images.Media.getBitmap(
-            context.contentResolver,
-            uri
-        )
+        val contentResolver = context.contentResolver
+        val bitmap = if (Build.VERSION.SDK_INT < Build.VERSION_CODES.P) {
+            @Suppress("DEPRECATION")
+            MediaStore.Images.Media.getBitmap(
+                contentResolver,
+                uri
+            )
+        } else {
+            ImageDecoder.decodeBitmap(
+                ImageDecoder.createSource(
+                    contentResolver,
+                    uri
+                )
+            )
+        }
         val drawable = BitmapDrawable(context.resources, bitmap)
-        Log.d(TAG, "insertImage : $uri, $drawable")
         editText.setCompoundDrawablesWithIntrinsicBounds(
             null,
             drawable,
