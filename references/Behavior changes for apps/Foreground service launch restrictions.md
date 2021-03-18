@@ -7,8 +7,10 @@ https://developer.android.com/about/versions/12/foreground-services
 アプリがこの変更により影響を受ける場合、`WorkManager`への移行が推奨される。
 Android 12のbeta版がリリースされるとき、`WorkManager`は優先度の高いバックグラウンドのタスクを開始するための推奨された解決策となっている。
 
-`WorkManager`の`2.7.0-alpha01`では、expedited jobsのサポートが含まれる。
-Android 11以下ではフォアグラウンドサービスを利用しており互換性がある。
+`WorkManager` 2.7.0から、Expedited jobsの`Worker`の定義に`setExpedited()`を呼び出すことができる。
+このAPIはAndroid 12のデバイス上ではExpedited jobsとして使われ、Android 11以下ではフォアグラウンドサービスとして使われる。
+
+開発者が意図的に実装できるように、`CoroutineWorker.setForeground()`, `ListenableWorker.setForegroundAsync()`はdeprecatedになるので、`setExpedited()`への移行が推奨される。
 
 サンプルコードは https://github.com/android/architecture-components-samples/tree/android-s/WorkManagerSample を参考。
 
@@ -27,13 +29,6 @@ Android 12で新たに追加されたExpedited jobsはアプリが重要なタ�
 
 * システムの読み込みが高負荷
 * Expedited jobsの割当制限を超えた
-
-## Updates to WorkManager
-
-`WorkManager` 2.7.0から、Expedited jobsの`Worker`の定義に`setExpedited()`を呼び出すことができる。
-このAPIはAndroid 12のデバイス上ではExpedited jobsとして使われ、Android 11以下ではフォアグラウンドサービスとして使われる。
-
-開発者が意図的に実装できるように、`CoroutineWorker.setForeground()`, `ListenableWorker.setForegroundAsync()`はdeprecatedになるので、`setExpedited()`への移行が推奨される。
 
 ## Cases where foreground service launches from the background are allowed
 
