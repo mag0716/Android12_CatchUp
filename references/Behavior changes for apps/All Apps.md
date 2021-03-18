@@ -7,33 +7,22 @@ https://developer.android.com/about/versions/12/behavior-changes-all
 ### Immersive mode improvements for gesture navigation
 
 Android 12では、Immersive modeが簡素化されジェスチャーナビゲーションがより簡単になり、動画や読書などの体験との整合性が保たれるようになる。
-ユーザが誤ってフルスクリーンを解除されないように保護することは引き続き可能だが、スワイプ操作1つで通常の画面へ戻れるようになる。
+詳細は https://developer.android.com/about/versions/12/features#immersive-mode-improvements を参照。
 
-`BEHAVIOR_SHOW_BARS_BY_TOUCH`, `BEHAVIOR_SHOW_BARS_BY_SWIPE` は deprecated になり、`BEHAVIOR_DEFAULT` が加わる。
-
-`BEHAVIOR_DEFAULT`：
-  3ボタン：Android 11以前と見た目、動作は変わらない
-  ジェスチャーナビゲーション：
-    見た目：Android 11以前と同じ
-    動作：ナビゲーションバーなどが非表示でも動作するようになる。Android 11ではスワイプ操作2回で通常モードに戻っていたが1回で可能になる
-
-`BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE`：Android 12における変更はない
-  `targetSdkVersion`がAndroid 11以前でAndroid 12の端末で動作：デフォルトでは`BEHAVIOR_SHOW_BARS_BY_SWIPE`となる
-  `targetSdkVersion`がAndroid 12でAndroid 11以下の端末で動作：`BEHAVIOR_SHOW_BARS_BY_TOUCH`は`BEHAVIOR_SHOW_BARS_BY_SWIPE`として扱われる。`targetSdkVersion`を更新するタイミングで`BEHAVIOR_SHOW_BARS_BY_SWIPE`への変更が必要
-
-### Foreground service notification delay
+### Foreground service notifications UX delay
 
 Android 12では、短時間で実行されるフォアグラウンドサービスにおいて通知が一瞬だけ表示されないように、通知を10秒遅らせることができるようになる。
 以下の特徴を1つでも持つ場合は通知が表示される
 
 * アクションボタンを持っている
 * `foregroundServiceType` が `connectedDevice`, `mediaPlayback`, `mediaProjection`, `phoneCall`
-* 着信、地図、メディア再生に関連するユースケースを提供している
+* NotificationのCategory属性に着信、地図、メディア再生を指定したユースケースを提供している
+  * Note: 今後の Developer Preview で変わる可能性がある
 * `setShowForegroundImmediately()` を呼び出している
 
 ## Privacy
 
-### Restrictions on Netlink MAC Address
+### Netlink MAC restriction
 
 Android 12ではシステム以外の全てのアプリに対して、変更不可能な識別子であるデバイスのMACアドレスへのアクセスを制限する。
 
@@ -116,7 +105,7 @@ Android 12では、アプリとシステムとのやりとり時のユーザー�
   * Note:`targetSdkVersion`が12の場合は、システムは通知エリアを自動的に閉じるので、`ACTION_CLOSE_SYSTEM_DIALOGS`の利用は不要
 * `targetSdkVersion`が11以下で、ユーザが通知を操作しており、通知のアクションボタンを使用する可能性がある場合
 
-## Non-SDK interface restrictions
+## Updated non-SDK interface restrictions
 
 * [Non-SDK interfaceを使っていないかのテスト方法](https://developer.android.com/guide/app-compatibility/restrictions-non-sdk-interfaces#test-for-non-sdk)
 * [Updates to non-SDK interface restrictions in Android 12](https://developer.android.com/about/versions/12/non-sdk-12)
