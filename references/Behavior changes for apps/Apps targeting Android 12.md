@@ -5,10 +5,35 @@ https://developer.android.com/about/versions/12/behavior-changes-12
 * Foreground service launch restrictions：一部の例外を除き、バックグラウンド状態のアプリからフォアグラウンドサービスの起動ができなくなる
 * App components containing intent filters must declare exported attribute：`intent-filter`が定義されているコンポーネントは`android:exported`の指定が必須になる
 * Unsafe launches of nested intents：Strict modeで安全でない方でネストされた`Intent`の使用が検出されるようになった
+* Activities cannot be started from services or broadcast receivers that behave as notification trampolines：Notificationをタップして起動された`Service`や`BroadcastReceiver`から`Activity`を起動できなくなる
+
+## User experience
+
+### Picture-in-picture behavior improvements
+
+Android 12ではPicture-in-pictureモードの動作が改善される。詳細は https://developer.android.com/about/versions/12/features/pip-improvements を参照。
+
+### Custom notification deprecation
+
+Android 12では全てのカスタムNotificationの見た目が変更される。
+以前は通知領域全体をカスタマイズできたので、ユーザーを混乱させたり異なるデバイス上でのレイアウトの互換性の問題を引き起こすアンチパターンとなっていた。
+
+`targetSdkVersion`がAndroid 12のアプリでは、custom content viewsは利用せず、代わりにシステムが提供する標準的なテンプレートを適用することになる。
+`Notification.DecoratedCustomViewStyle`はアイコン、拡大、縮小ボタン、アプリ名など他のNotificationと同じ要素を持つ。
+
+カスタムNotificationを利用している場合は可能な限り新しいテンプレートを適用してテストすることが推奨される。
+
+1. カスタムNotificationの変更を有効化する
+  * `targetSdkVersion`に`S`を指定
+  * コンパイル
+  * Android 12の端末にインストール
+1. カスタムViewを使った全てのNotificationをテストし期待通りの見た目になるかを確認する
+1. カスタムNotificationで利用できるViewのサイズは以前よりも小さくなっているので、サイズ計算に注意
+1. 優先度を`HIGH`に変更しHeads UpとしてNotificationを表示し、期待通りの見た目になるかを確認する
 
 ## Privacy
 
-### Modern SameSite cookie behaviors in WebView
+### Modern SameSite cookies in WebView
 
 ChromiumのサードパーティCookieの扱いの変更が`WebView`に取り込まれる。
 
@@ -42,6 +67,12 @@ ChromiumのサードパーティCookieの扱いの変更が`WebView`に取り込
 
 `SameSite`の詳細な情報は https://www.chromium.org/updates/same-site を参照
 
+### Motion sensors are rate-limited
+
+潜在的にユーザーのセンシティブな情報になりうるデータを保護するため、`targetSdkVersion`をAndroid 12にしたアプリでは加速度、ジャイロ、地磁気センサーから取得した値は更新レートが200Hzに制限される。
+
+それ以上高いレートが必要になる場合は、`HIGH_SAMPLING_RATE_SENSORS`パーミッションの定義が必要になり、パーミッション定義がない場合は`SecurityException`が発生する。
+
 ### ADB backup restrictions
 
 アプリのプライベートデータの保護のために、Android 12では`adb backup`コマンドのデフォルト動作が変わる。
@@ -59,11 +90,36 @@ Caution：リリースするアプリでは保護のために`android:debuggable
 
 Warning：`android:exported`を指定していない場合、Logcatに`INSTALL_FAILED_VERIFICATION_FAILURE`が出力され、アプリはAndroid 12の端末にはインストールすることができない。
 
+#### Messages in Android Studio
+
 `android:exported`の指定がない場合、Logcatに以下のエラーメッセージが出力される。
 
+##### Android Studio 2020.3.1 Canary 11 or later
+
+まず、Lintでwarningが表示される
+
 ```
-Targeting S+ (version 10000 and above) requires that an explicit value for \
-android:exported be defined when intent filters are present
+When using intent filters, please specify android:exported as well
+```
+
+コンパイル時には以下のエラーメッセージが出力される。
+
+```
+Manifest merger failed : Apps targeting Android 12 and higher are required \
+to specify an explicit value for android:exported when the corresponding \
+component has an intent filter defined.
+```
+
+##### Older versions of Android Studio
+
+インストール時にエラーメッセージがLogcatに出力される。
+
+```
+Installation did not succeed.
+The application could not be installed: INSTALL_FAILED_VERIFICATION_FAILURE
+List of apks:
+[0] '.../build/outputs/apk/debug/app-debug.apk'
+Installation failed due to: 'null'
 ```
 
 ### Pending intents must declare mutability
@@ -89,7 +145,7 @@ mutabilityフラグの定義忘れを検出するために、Android Studio上�
 
 Developer Preview中はテストのために`PENDING_INTENT_EXPLICIT_MUTABILITY_REQUIRED`を非活性にすることができる。
 
-### Unsafe launches of nested intents
+### Nested intent launches
 
 プラットフォームのセキュリティ改善のため、Android 12ではネストされた`Intent`(別の`Intent`がextraに渡される`Intent`)からの安全でない起動を警告するデバッグ機能が提供される。
 以下の両方を実行すると、`StrictMode`違反が発生する。
@@ -102,7 +158,7 @@ Developer Preview中はテストのために`PENDING_INTENT_EXPLICIT_MUTABILITY_
 ネストされた`Intent`からの安全でない起動をチェックするために、`detectUnsafeIntentLaunch()`を呼び出す。
 Note：`detectAll()`を呼び出せば、`detectUnsafeIntentLaunch()`も自動的に呼び出される。
 
-#### Use intents more responsibly
+##### Use intents more responsibly
 
 アプリがネストされた`Intent`で起動したいケースでは以下のように対応する。
 
@@ -132,6 +188,17 @@ Indirect notification activity start (trampoline) from PACKAGE_NAME, \
 this should be avoided for performance reasons.
 ```
 
+#### Identify which app components act as notification trampolines
+
+アプリをテストする際、Notificationをタップ後、どの`Service`、もしくは、`BroadcastReceiver`がnotification trampolineとして機能したかを以下のadbコマンドで特定することができる。
+
+```
+adb shell dumpsys activity service \
+  com.android.systemui/.dump.SystemUIAuxiliaryDumpService
+```
+
+`NotifInteractionLog`が含まれるセクションに表示される。
+
 #### Update your app
 
 notification trampolineを使っている場合は以下の手順で移行する。
@@ -145,26 +212,8 @@ notification trampolineを使っている場合は以下の手順で移行する
 
 Developer Preview中にテストするときは`NOTIFICATION_TRAMPOLINE_BLOCK`を使って有効、無効を切り替えることができる。
 
-## Non-SDK interface restrictions
+## Updated non-SDK restrictions
 
 * [Non-SDK interfaceを使っていないかのテスト方法](https://developer.android.com/guide/app-compatibility/restrictions-non-sdk-interfaces#test-for-non-sdk)
 * [Updates to non-SDK interface restrictions in Android 12](https://developer.android.com/about/versions/12/non-sdk-12)
 * [Restrictions on non-SDK interfaces](https://developer.android.com/guide/app-compatibility/restrictions-non-sdk-interfaces)
-
-## Custom notification changes
-
-Android 12では全てのカスタムNotificationの見た目が変更される。
-以前は通知領域全体をカスタマイズできたので、ユーザーを混乱させたり異なるデバイス上でのレイアウトの互換性の問題を引き起こすアンチパターンとなっていた。
-
-`targetSdkVersion`がAndroid 12のアプリでは、custom content viewsは利用せず、代わりにシステムが提供する標準的なテンプレートを適用することになる。
-`Notification.DecoratedCustomViewStyle`はアイコン、拡大、縮小ボタン、アプリ名など他のNotificationと同じ要素を持つ。
-
-カスタムNotificationを利用している場合は可能な限り新しいテンプレートを適用してテストすることが推奨される。
-
-1. カスタムNotificationの変更を有効化する
-  * `targetSdkVersion`に`S`を指定
-  * コンパイル
-  * Android 12の端末にインストール
-1. カスタムViewを使った全てのNotificationをテストし期待通りの見た目になるかを確認する
-1. カスタムNotificationで利用できるViewのサイズは以前よりも小さくなっているので、サイズ計算に注意
-1. 優先度を`HIGH`に変更しHeads UpとしてNotificationを表示し、期待通りの見た目になるかを確認する
