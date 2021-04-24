@@ -4,7 +4,28 @@ https://developer.android.com/about/versions/12/features
 
 * [API diff report](https://developer.android.com/sdk/api_diff/s-dp1/changes)
 
-## User experience
+## New experiences
+
+### Audio-coupled haptic effect
+
+Android 12のアプリでは端末のバイブレーションを使用してオーディオから触覚フィードバックを生成することができる。
+これはゲームやオーディオ体験においてより没入するための機会を提供する。
+
+詳細情報は[HapticGenerator](https://developer.android.com/reference/android/media/audiofx/HapticGenerator)のリファレンスを参照。
+
+### Splash screen API
+
+Android 12ではすべてのアプリに新しいアプリ起動アニメーションが導入され、起動時点からのアプリ内動作、アプリアイコンを表示するスプラッシュ画面、アプリ本体への遷移が含まれる。詳細は https://developer.android.com/about/versions/12/features/splash-screen を参照。
+
+### New phone call notifications allowing for ranking importance of incoming calls
+
+Android 12では電話の着信のための`Notification.CallStyle`が追加される。このテンプレートを利用すると、ステータスバーに通話時間を示すチップが目立つように表示され、チップをタップすることで通話に戻ることができる。
+
+ユーザーにとって、着信および通話は最も重要であるためこれらの通知は最上位に表示される。またこの順位により優先順位の高い通話を他のデバイスに転送できる可能性がある。
+
+### Enriched image support for notifications
+
+Android 12では`MessagingStyle()`, `BigPictureStyle()`の通知にアニメーション画像を提供することでユーザー体験を豊かにすることができる。また、ユーザーが Notification からメッセージを返信する際に画像付きメッセージを送信できるようになった。
 
 ### Rounded corner APIs
 
@@ -35,25 +56,27 @@ Android 12では、Immersive modeが簡素化されジェスチャーナビゲ�
   `targetSdkVersion`がAndroid 11以前でAndroid 12の端末で動作：デフォルトでは`BEHAVIOR_SHOW_BARS_BY_SWIPE`となる
   `targetSdkVersion`がAndroid 12でAndroid 11以下の端末で動作：`BEHAVIOR_SHOW_BARS_BY_TOUCH`は`BEHAVIOR_SHOW_BARS_BY_SWIPE`として扱われる。`targetSdkVersion`を更新するタイミングで`BEHAVIOR_SHOW_BARS_BY_SWIPE`への変更が必要
 
-### Audio-coupled haptic effect
-
-Android 12のアプリでは端末のバイブレーションを使用してオーディオから触覚フィードバックを生成することができる。
-これはゲームやオーディオ体験においてより没入するための機会を提供する。
-
-詳細情報は[HapticGenerator](https://developer.android.com/reference/android/media/audiofx/HapticGenerator)のリファレンスを参照。
-
-### Picture-in-picture behavior improvements
-
-Android 12ではPicture-in-picture(PiP)モードのための動作が改善される。詳細は https://developer.android.com/about/versions/12/features/pip-improvements を参照。
-
-## New experiences
-
 ### Rich content insertion
 
 クリップボード、キーボードやドラッグアンドドロップでリッチなコンテンツを受け取れる unified API が追加される。
 詳細は[Unified API for receiving content](https://developer.android.com/about/versions/12/features/unified-content-api)
 
+## Camera
+
+### Quad bayer camera sensor support
+
+現在、多くのAndroid端末には、Quad/Nona Bayerパターンに代表される高解像度のカメラセンサーが搭載されており、画質や低照度清野の面で非常に高い柔軟性をそなている。Android 12ではサードパーティアプリがこれらのセンサーを最大限に活用できるようにAPIが追加された。このAPIはセンサーのユニークな動作をサポートしフル解像度または最大解像度モードとデフォルトモードで動作する際に異なるストリーム構成や組み合わせをサポートする可能性があることを考慮している。
+
 ## Graphics and images
+
+### Provide apps direct access to tombstone traces
+
+Android 12から`ApplicationExitInfo.getTraceInputStream()`を通じてプロトコルバッファーであるtombstoneにアクセスが可能になる。以前はadbを通じてしかアクセスできなかった。
+
+### AVIF image support
+
+Android 12ではAVIFをサポートする。
+AVIFの詳細については[Jake Archibaldのブログ](https://jakearchibald.com/2020/avif-has-landed/)が参考になる。
 
 ### Easier blurs, color filters, and other effects
 
@@ -69,11 +92,6 @@ Android 11では最初の画像のみデコード可能だった。
 
 * [API reference](https://developer.android.com/ndk/reference/group/image-decoder)
 * [sample on GitHub](https://github.com/android/ndk-samples/tree/develop/webp/image-decoder)
-
-### AVIF image support
-
-Android 12ではAVIFをサポートする。
-AVIFの詳細については[Jake Archibaldのブログ](https://jakearchibald.com/2020/avif-has-landed/)が参考になる。
 
 ## Media
 
@@ -92,6 +110,18 @@ Android 12では幅広いプレイヤーをサポートするAVC(H.264)にHEVC(H
 1. `MediaCrypto.requiresSecureDecoderComponent(mimeType)`
 
 新たに追加された`requiresSecureDecoder(@NonNull String mime)`と`requiredSecureDecoder(@NonNull String mime, @SecurityLevel int level)`を使えばすぐに`MediaDrm`を作成することができるようになる。
+
+### Video encoding improvements
+
+Android 12ではビデオエンコーディングの量子化パラメータの値を制御するための標準的なキーセットが定義される。
+
+このキーはMediaFormat APIやNDK Mediaライブラリで利用できる。
+
+また、ビデオエンコーダーに品質の最低基準値が設定されたので、極端な低品質にならないことが保証される。
+
+### Device chipset information
+
+Android 12では`Build.SOC_MANUFACTURER`, `Build.SOC_MODEL` が追加された。
 
 ## Security
 

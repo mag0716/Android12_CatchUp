@@ -2,11 +2,6 @@
 
 https://developer.android.com/about/versions/12/behavior-changes-12
 
-* Foreground service launch restrictions：一部の例外を除き、バックグラウンド状態のアプリからフォアグラウンドサービスの起動ができなくなる
-* App components containing intent filters must declare exported attribute：`intent-filter`が定義されているコンポーネントは`android:exported`の指定が必須になる
-* Unsafe launches of nested intents：Strict modeで安全でない方でネストされた`Intent`の使用が検出されるようになった
-* Activities cannot be started from services or broadcast receivers that behave as notification trampolines：Notificationをタップして起動された`Service`や`BroadcastReceiver`から`Activity`を起動できなくなる
-
 ## User experience
 
 ### Picture-in-picture behavior improvements
@@ -31,7 +26,19 @@ Android 12では全てのカスタムNotificationの見た目が変更される�
 1. カスタムNotificationで利用できるViewのサイズは以前よりも小さくなっているので、サイズ計算に注意
 1. 優先度を`HIGH`に変更しHeads UpとしてNotificationを表示し、期待通りの見た目になるかを確認する
 
+### Android App Links verification changes
+
+`targetSdkVersion`がAndroid 12のアプリでは、Android App Linksの承認の仕方についていくつかの変更がある。これらの変更は信頼性と開発者、ユーザーがよりコントロールできるようにする。
+
+https://developer.android.com/about/versions/12/web-intent-resolution#update-declarations は承認プロセスの変更をサポートし、https://developer.android.com/about/versions/12/web-intent-resolution#manually-invoke-domain-verification にてテストすることもできる。
+
 ## Privacy
+
+### Motion sensors are rate-limited
+
+潜在的にユーザーのセンシティブな情報になりうるデータを保護するため、`targetSdkVersion`をAndroid 12にしたアプリでは加速度、ジャイロ、地磁気センサーから取得した値は更新レートが200Hzに制限される。
+
+それ以上高いレートが必要になる場合は、`HIGH_SAMPLING_RATE_SENSORS`パーミッションの定義が必要になり、パーミッション定義がない場合は`SecurityException`が発生する。
 
 ### Modern SameSite cookies in WebView
 
@@ -67,12 +74,6 @@ ChromiumのサードパーティCookieの扱いの変更が`WebView`に取り込
 
 `SameSite`の詳細な情報は https://www.chromium.org/updates/same-site を参照
 
-### Motion sensors are rate-limited
-
-潜在的にユーザーのセンシティブな情報になりうるデータを保護するため、`targetSdkVersion`をAndroid 12にしたアプリでは加速度、ジャイロ、地磁気センサーから取得した値は更新レートが200Hzに制限される。
-
-それ以上高いレートが必要になる場合は、`HIGH_SAMPLING_RATE_SENSORS`パーミッションの定義が必要になり、パーミッション定義がない場合は`SecurityException`が発生する。
-
 ### ADB backup restrictions
 
 アプリのプライベートデータの保護のために、Android 12では`adb backup`コマンドのデフォルト動作が変わる。
@@ -84,7 +85,7 @@ Caution：リリースするアプリでは保護のために`android:debuggable
 
 ## Security
 
-### Safer exporting of components
+### Safer component exporting
 
 `targetSdkVersion`をAndroid 12にしたアプリでは、`intent-filter`を利用しているactivities, services, broadcast receiversに対しては`android:exported`の指定が必須になる。
 
@@ -150,8 +151,8 @@ Developer Preview中はテストのために`PENDING_INTENT_EXPLICIT_MUTABILITY_
 プラットフォームのセキュリティ改善のため、Android 12ではネストされた`Intent`(別の`Intent`がextraに渡される`Intent`)からの安全でない起動を警告するデバッグ機能が提供される。
 以下の両方を実行すると、`StrictMode`違反が発生する。
 
-* アプリがネストされた`Intent`から渡された`Intent`を取得する
-* 取得した`Intent`を使って即座に`startActivity()`, `startService()`, `bindService()`を呼び出す
+1. アプリがネストされた`Intent`から渡された`Intent`を取得する
+1. 取得した`Intent`を使って即座に`startActivity()`, `startService()`, `bindService()`を呼び出す
 
 #### Configure your app to detect unsafe launches of nested intents
 
@@ -176,7 +177,46 @@ Note：`detectAll()`を呼び出せば、`detectUnsafeIntentLaunch()`も自動�
 
 詳細は https://developer.android.com/about/versions/12/foreground-services を参照。
 
-### Notification trampolines cannot be created from services or broadcast receivers
+### Exact alarm permission
+
+アプリがシステムリソースを節約することを推奨するため、`targetSdkVersion`がAndroid 12のアプリでは正確なアラームを設定するためには`SCHEDULE_EXACT_ALARM`パーミッションを持つ必要があり、パーミッションがない場合は`SecurityException`となる。
+
+Caution： アプリが設定したアラームをシステムが正確にトリガーしようとするとデバイスはDozeから離脱するためバッテリーなどリソースを大量に消費する。さらにシステムはこれらの要求をバッチ処理として扱うことができない。
+
+アプリのユースケースで絶対に正確なアラームが必要かどうかを検討すること。長時間の作業やネットワークアクセスが必要なケースでは`WorkManager`を利用し、Doze状態の時に作業が必要なケースでは正確ではないアラームを利用する。
+
+#### Exact alarms and inexact alarms
+
+* exact alarm
+  * `setAlarmClock()`
+  * `setExact()`
+  * `setExactAndAllowWhileIdle()`
+* inexact alarm
+  * `setInexactRepeating()`
+  * `setAndAllowWhileIdle()`
+  * `setWindow()`
+
+#### Acceptable use cases for this permission
+
+以下のようなケースでは正確なアラームを利用すべき。
+
+* 時計やタイマーアプリ
+* ユーザーが正確なタイミングでアクションを予約することができるアプリ
+
+Android 12では正確なアラームは重要で時間的制約のある中断とみなされるため、https://developer.android.com/about/versions/12/foreground-services には影響されない。
+
+#### Check whether your app has the permission
+
+パーミッションが許可済みかどうかは`canScheduleExactAlarms()`を利用する。必要であれば、`ACTION_REQUEST_SCHEDULE_EXACT_ALARM` を利用し端末の設定アプリへ移動することもできる。
+
+#### Disable the behavior change
+
+テスト目的で無効化するためには以下のいずれかの方法を利用する
+
+* 開発者オプションで `REQUIRE_EXACT_ALARM_PERMISSION` をOFFにする
+* `adb shell am compat disable REQUIRE_EXACT_ALARM_PERMISSION PACKAGE_NAME`
+
+### Notification trampolines restrictions
 
 ユーザがNotificationを操作すると、いくつかのアプリはNotificationのタップに反応して処理が行われ最終的にapp componentを起動するケースがある。
 このapp componentが notification trampolineとして知られている。
@@ -211,6 +251,18 @@ notification trampolineを使っている場合は以下の手順で移行する
 #### Toggle the behavior
 
 Developer Preview中にテストするときは`NOTIFICATION_TRAMPOLINE_BLOCK`を使って有効、無効を切り替えることができる。
+
+## Backup and restore
+
+`targetSdkVersion`がAndroid 12以上のアプリではバックアップ、リストアの動作の仕方が変わる。詳細は https://developer.android.com/about/versions/12/backup-restore を参照。
+
+## Vendor libraries
+
+### Vendor-supplied native shared libraries
+
+`targetSdkVersion`がAndroid 12以降のアプリではシリコンベンダーやデバイスメーカーが提供する[Non-NDK native shared libraries](https://source.android.com/devices/tech/config/namespaces_libraries#adding-additional-native-libraries)以外はデフォルトではアクセスできない。これらのライブラリを利用するには`<uses-native-library>`を定義する必要がある。
+
+`targetSdkVersion`がAndroid 11以下のアプリではデフォルトでアクセス可能。
 
 ## Updated non-SDK restrictions
 
