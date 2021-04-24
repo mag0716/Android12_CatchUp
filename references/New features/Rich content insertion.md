@@ -1,4 +1,4 @@
-# Unified API for receiving content
+# Rich content insertion
 
 https://developer.android.com/about/versions/12/features/unified-content-api
 
