@@ -4,15 +4,10 @@ https://developer.android.com/about/versions/12/behavior-changes-all
 
 ## User experience
 
-### Immersive mode improvements for gesture navigation
-
-Android 12では、Immersive modeが簡素化されジェスチャーナビゲーションがより簡単になり、動画や読書などの体験との整合性が保たれるようになる。
-詳細は https://developer.android.com/about/versions/12/features#immersive-mode-improvements を参照。
-
 ### Foreground service notifications UX delay
 
 Android 12では、短時間で実行されるフォアグラウンドサービスにおいて通知が一瞬だけ表示されないように、通知を10秒遅らせることができるようになる。
-以下の特徴を1つでも持つ場合は通知が表示される
+以下の特徴を1つでも持つ場合は即座に通知が表示される
 
 * アクションボタンを持っている
 * `foregroundServiceType` が `connectedDevice`, `mediaPlayback`, `mediaProjection`, `phoneCall`
@@ -20,18 +15,69 @@ Android 12では、短時間で実行されるフォアグラウンドサービ�
   * Note: 今後の Developer Preview で変わる可能性がある
 * `setShowForegroundImmediately()` を呼び出している
 
-## Privacy
+### Immersive mode improvements for gesture navigation
 
-### Netlink MAC restriction
+Android 12では、Immersive modeが簡素化されジェスチャーナビゲーションがより簡単になり、動画や読書などの体験との整合性が保たれるようになる。
+詳細は https://developer.android.com/about/versions/12/features#immersive-mode-improvements を参照。
 
-Android 12ではシステム以外の全てのアプリに対して、変更不可能な識別子であるデバイスのMACアドレスへのアクセスを制限する。
+### Web intent resolution
 
-`targetSdkVersion`が12：nullが返る
-`targetSdkVersion`が11以前：固定の値(02:00:00:00:00:00)が返る
+Android 12では、Webリンクをより効率的に利用するために未検証のドメインが含まれる場合でもデフォルトブラウザで開く。アプリは以下の方法でドメインの承認を得ることができる。
 
-低レベルなAPI(`NetworkInterface`, `getifaddrs()`など)ではなく`ConnectivityManager`を使うべき。
-`NetworkInterface.getHardwareAddress()`を利用すると、Logcatに`CompatibilityChangeReporter: Compat change id reported: 170188668;`が出力される
-`RETURN_NULL_HARDWARE_ADDRESS`を変更することで戻り値をnullと固定値で切り替えることができる
+* [Android App Links](https://developer.android.com/training/app-links/verify-site-associations)を使ってドメインを検証する
+* ユーザがシステムに対して自身のアプリで開く許可をリクエストする
+
+詳細は https://developer.android.com/about/versions/12/web-intent-resolution を参照。
+
+### Restrictive App Standby bucket
+
+[App Standby Buckets](https://developer.android.com/topic/performance/appstandby) はアプリの使用状況に基づいてシステムがアプリのリソース共有の優先順を決めるのに役立つ。
+
+bucketごとに優先順が表現されており、一番低い優先順ではシステムがアプリの実行に制限をかける。
+
+Android 12から `restricted` という名前のbucketが追加され、より優先順が低いものとなる。
+
+1. Active
+1. Working set
+1. Frequent
+1. Rare
+1. Restricted
+
+システムはアプリの動作と利用状況を考慮してどのbucketに入れるかを決定する。アプリがより責任を持ってシステムリソースを利用する場合は `restricted` bucket に入れられる可能性はひくくなる。
+
+ユーザと直接やり取りするアプリはより制限のゆるいbucketに配置する。
+
+#### Power management restrictions
+
+`restricted` bucketにあるアプリでは以下が制限される。
+
+* 1日1回10分までジョブを実行することが可能。この間は他のアプリのジョブとグループ化される。
+* `setInexactRepeating()`, `setAndAllowWhileIdle()`, `setWindow()`によって作られた不正確なアラームを1日1回実行することができる。
+* High PriorityのFCMは1日に5回タイムリーに受け取ることができる。それ以降のFCMはNormal Priorityとして扱われるのでデバイスが節電モードになっていれば遅延する可能性がある
+
+Note: 他のbucketと異なりこれらの電力管理の制限は充電中であっても適用される。ただし、充電中、アイドル中、課金されなネットワークにある場合は緩和される
+
+#### Foreground services allowance
+
+`restricted` bucketにあるアプリでもForeground Serviceを実行することは可能だが、`targetSdkVersion`をAndroid 12にすると[Foreground service launch restrictions](https://developer.android.com/about/versions/12/foreground-services)が影響する。
+
+#### Check weather your app is in the restricted bucket
+
+`getAppStandbyBucket()`の戻り値が`STANDBY_BUCKET_RESTRICTED`であれば、`restricted` bucketに配置されている。
+
+#### Test the restricted bucket behavior
+
+以下のコマンドを実行すると、`restricted` bucketに配置することができる。
+
+```
+adb shell am set-standby-bucket PACKAGE_NAME restricted
+```
+
+## Graphics and images
+
+### Improved refresh rate switching
+
+Android 12では、ディスプレイが新しいリフレッシュレートへのシームレスな移行(1-2秒間の黒い画面など視覚的な中断がない状態)をサポートしているかどうかに関わらず、`setFrameRate()`でリフレッシュレートの変更が可能になる。これまではディスプレイが対応していない場合は`setFrameRate()`が呼び出された後も通常は同じリフレッシュレートが利用されていた。`getAlternativeRefreshRates()`を呼び出すことでシームレスに移行ができるかどうかを判断できる。通常、`onDisplayChanged()`は切り替えが完了した後に呼び出されるがシームレスではない移行時に呼び出されるものもある。
 
 ## Security
 
