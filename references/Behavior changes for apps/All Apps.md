@@ -105,7 +105,7 @@ Android 12では、セキュリティとUXを維持するために、一部の�
   * Note: `TYPE_APPLICATION_OVERLAY`は信頼されない
 * ウィンドウのルートViewが`GONE`, `INVISIBLE`
 * アルファ値が0.0
-* システムが十分な透明度と判断したウィンドウ。DP1では0.8だが変更される可能性がある
+* システムが十分な透明度と判断したウィンドウ。DP3では0.8だが変更される可能性がある
 
 #### Detect when an untrusted touch is blocked
 
