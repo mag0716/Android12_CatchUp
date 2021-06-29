@@ -34,11 +34,73 @@ https://developer.android.com/about/versions/12/web-intent-resolution#update-dec
 
 ## Privacy
 
+### Approximate location
+
+`targetSdkVersion`がAndroid 12のアプリではユーザはアプリがおおよその位置情報のみへアクセスするようにリクエストすることができる。
+
+Note: `ACCESS_FINE_LOCATION`なしで`ACCESS_COARSE_LOCATION`のみのアプリには影響しない。
+
+`targetSdkVersion`がAndroid 12のアプリが、`ACCESS_FINE_LOCATION`をリクエストする場合は`ACCESS_COARSE_LOCATION`も1つのリクエストとしてリクエストしてあげる必要がある。
+
+`ACCESS_FINE_LOCATION`と`ACCESS_COARSE_LOCATION`を同時にリクエストするとシステムは以下の選択肢が新たに含まれるようになる。
+
+* Precise：`ACCESS_FINE_LOCATION`が提供する正確な位置情報
+* Approximate：`ACCESS_COARSE_LOCATION`が提供するおおよその位置情報
+
+詳細は https://developer.android.com/about/versions/12/approximate-location
+
+### App hibernation
+
+Android 12ではAndroid 11で導入されたパーミッションの自動リセットが拡張される。
+`targetSdkVersion`がAndroid 12のアプリをユーザが数ヶ月利用しないとシステムはパーミッションを自動でリセットし休止状態とする。
+
+Note: `DeviceAdminService`を実装していたりデバイスオーナーとして動作しているアプリについては対象にならない。
+
+休止状態は以下の特徴がある。
+
+* システムはアプリのキャッシュを削除することでストレージ領域を最適化する
+* アプリはバックグラウンドでのジョブが実行できない
+* アプリはhigh-priorityを含むプッシュ通知を受け取れない
+
+ユーザがアプリを操作すると休止状態を抜け、ジョブの作成やプッシュ通知の受信が再度可能になる。
+ただし、休止状態前に実行していたジョブなどのリスケジュールは必要にいなる。
+この動作は端末の設定アプリから手動でforce-stopsするのと類似している。
+より簡単にサポートするためにはWorkManagerを利用するとよい。
+休止状態から抜けた時とデバイスの再起動時に実行される`ACTION_BOOT_COMPLETED`契機でのリスケジュールすることができる。
+
+#### Request user to disable hibernation
+
+アプリのユースケースが休止状態の影響が予想される場合、アプリに休止状態とパーミッションの自動リセットを除外するリクエストをユーザに送信することができる。
+ユーザがアプリを操作せずにバックグラウンドで動作することを期待しているような以下のアプリの場合に有用。
+
+* 家族の位置情報を定期的に提供する
+* 端末とサーバのデータを同期する
+* TVなどのスマートデバイスと連携する
+* Watchなどのデバイスとペアリングする
+
+リクエストするために`Intent.ACTION_APPLICATION_DETAILS_SETTINGS`を含むIntentを実行する。
+
+Note: Intentを発生させる前になぜシステム設定に移動するのかを通知するUIを見せることを検討した方がよい。
+
+#### Test the hibernation behavior
+
+休止状態をテストするためにはadbコマンドを利用する。
+
 ### Motion sensors are rate-limited
 
 潜在的にユーザーのセンシティブな情報になりうるデータを保護するため、`targetSdkVersion`をAndroid 12にしたアプリでは加速度、ジャイロ、地磁気センサーから取得した値は更新レートが200Hzに制限される。
 
 それ以上高いレートが必要になる場合は、`HIGH_SAMPLING_RATE_SENSORS`パーミッションの定義が必要になり、パーミッション定義がない場合は`SecurityException`が発生する。
+
+Note: もしマイクへのアクセスを無効にしている場合、`HIGH_SAMPLING_RATE_SENSORS`の定義に関わらずモーションセンサーと位置センサーは制限される。
+
+### Data access auditing
+
+Android 11で追加されたData access auditing APIはアプリのユースケースベースのタグを生成することができる。
+これらのタグは特定のデータアクセスをアプリがしているかどうかを簡単に調べることができる。
+
+`targetSdkVersion`がAndroid 12のアプリでは、これらのタグをマニフェストファイルに定義する必要がある。
+もし定義していない場合はシステムは`null`がタグとして利用される。
 
 ### Modern SameSite cookies in WebView
 
@@ -123,7 +185,7 @@ List of apks:
 Installation failed due to: 'null'
 ```
 
-### Pending intents must declare mutability
+### Pending intents mutability
 
 `targetSdkVersion`をAndroid 12にしたアプリでは、`PendingIntent`の生成時にmutabilityフラグ(`PendingIntent.FLAG_MUTABLE`, `PendingIntent.FLAG_IMMUTABLE`)の指定が必須となる。
 
@@ -146,13 +208,16 @@ mutabilityフラグの定義忘れを検出するために、Android Studio上�
 
 Developer Preview中はテストのために`PENDING_INTENT_EXPLICIT_MUTABILITY_REQUIRED`を非活性にすることができる。
 
-### Nested intent launches
+### Unsafe intent launches
 
 プラットフォームのセキュリティ改善のため、Android 12ではネストされた`Intent`(別の`Intent`がextraに渡される`Intent`)からの安全でない起動を警告するデバッグ機能が提供される。
-以下の両方を実行すると、`StrictMode`違反が発生する。
 
-1. アプリがネストされた`Intent`から渡された`Intent`を取得する
-1. 取得した`Intent`を使って即座に`startActivity()`, `startService()`, `bindService()`を呼び出す
+#### About nested intents
+
+ネストされた`Intent`とは他の`Intent`が渡された`Intent`のことで以下の両方を実行すると、`StrictMode`違反が発生する。
+
+* アプリがネストされた`Intent`から渡された`Intent`を取得する
+* 取得した`Intent`を使って即座に`startActivity()`, `startService()`, `bindService()`を呼び出す
 
 #### Configure your app to detect unsafe launches of nested intents
 
@@ -163,6 +228,7 @@ Note：`detectAll()`を呼び出せば、`detectUnsafeIntentLaunch()`も自動�
 
 アプリがネストされた`Intent`で起動したいケースでは以下のように対応する。
 
+* `Intent`内では必要なextraのみをコピーし、必要なバリデーションを行う。
 * 内部のコンポーネントへの遷移：`exported=true`としない。
 * アプリ間の遷移：`PendingIntent`で代用する
 
@@ -192,6 +258,7 @@ Caution： アプリが設定したアラームをシステムが正確にトリ
   * `setExact()`
   * `setExactAndAllowWhileIdle()`
 * inexact alarm
+  * `set()`
   * `setInexactRepeating()`
   * `setAndAllowWhileIdle()`
   * `setWindow()`
@@ -205,11 +272,11 @@ Caution： アプリが設定したアラームをシステムが正確にトリ
 
 Android 12では正確なアラームは重要で時間的制約のある中断とみなされるため、https://developer.android.com/about/versions/12/foreground-services には影響されない。
 
-#### Check whether your app has the permission
+#### Ask users to grant the app access
 
 パーミッションが許可済みかどうかは`canScheduleExactAlarms()`を利用する。必要であれば、`ACTION_REQUEST_SCHEDULE_EXACT_ALARM` を利用し端末の設定アプリへ移動することもできる。
 
-#### Disable the behavior change
+#### Enable the behavior change
 
 テスト目的で無効化するためには以下のいずれかの方法を利用する
 
@@ -255,6 +322,28 @@ Developer Preview中にテストするときは`NOTIFICATION_TRAMPOLINE_BLOCK`�
 ## Backup and restore
 
 `targetSdkVersion`がAndroid 12以上のアプリではバックアップ、リストアの動作の仕方が変わる。詳細は https://developer.android.com/about/versions/12/backup-restore を参照。
+
+## Connectivity
+
+### Concurrent Peer-to-Peer + Internet Connection
+
+Android 12からPeer-to-Peerとインターネットの同時接続をサポートするデバイスが同時接続を維持できるようになった。
+この機能は`targetSdkVersion`がAndroid 12以上の全てのアプリで自動的に有効になり、それ以下のAPIレベルのアプリでは従来の動作のままでWi-FiネットワークがPeerデバイスに接続する前に切断される。
+
+#### Compatibility
+
+`WifiManager.getConnectionInfo()`が1つのネットワークのみの`WifiInfo`を返すようになり、以下のように変更されている。
+
+* 1つのWi-Fiネットワークが有効な場合は`WifiInfo`が返却される
+* 1つ以上のWi-Fiネットワークが有効でPeerデバイスとの接続がある場合はPeerデバイスの`WifiInfo`が返却される
+* 1つ以上のWi-Fiネットワークが有効でPeerデバイスとの接続がない場合はプライマリーの`WifiInfo`が返却される
+
+同時接続をサポートするデバイスでより良いUXを提供するために、`WifiManager.getConnectionInfo()`の代わりに`NetworkCallback.oonCapabilitiesChanged()`の利用が推奨。
+
+#### Enable screen off for NFC payments
+
+`targetSdkVersion`がAndroid 12以上のアプリでは`requireDeviceScreenOn=false`でスクリーンがオンにしなくてもNFCでの支払いが可能になる。
+詳細は https://developer.android.com/guide/topics/connectivity/nfc/hce#ScreenOffBehavior
 
 ## Vendor libraries
 
