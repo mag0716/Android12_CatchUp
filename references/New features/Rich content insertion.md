@@ -24,3 +24,13 @@ APIを利用するためには、アプリでサポートする特定のコン�
 ## Comparison with the keyboard image API
 
 Unified APIは[keyboard image API](https://developer.android.com/guide/topics/text/image-keyboard)の次バージョンのAPIとして考えることができ、keyboard image APIでできることはUnified APIでも可能。
+
+### Supported features and API levels: Jetpack
+
+keyboard image API：キーボードからの挿入のみ
+unified API：全て対応可能、かつ、一部はAPI level 13以上であれば利用可能
+
+### Supported features and API levels: native API
+
+keyboard image API：キーボードからの挿入のみで、API level 25以上
+unified API：全て対応可能だがAndroid 12以上のみ

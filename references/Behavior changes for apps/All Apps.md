@@ -4,6 +4,11 @@ https://developer.android.com/about/versions/12/behavior-changes-all
 
 ## User experience
 
+### Overscroll effect
+
+Android 12ではオーバースクロール時の動作が変わる。
+詳細は https://developer.android.com/about/versions/12/overscroll
+
 ### Foreground service notifications UX delay
 
 Android 12では、短時間で実行されるフォアグラウンドサービスにおいて通知が一瞬だけ表示されないように、通知を10秒遅らせることができるようになる。
@@ -73,13 +78,97 @@ Note: 他のbucketと異なりこれらの電力管理の制限は充電中で�
 adb shell am set-standby-bucket PACKAGE_NAME restricted
 ```
 
+### Display#getRealSize and getRealMetrics: deprecation and sandboxing
+
+Androidデバイスは大画面、タブレット、Foldableなど異なる多くの要素が有効になっている。
+それぞれのデバイスにコンテンツを適切に描画するためにはアプリは画面かディスプレイのサイズを決定する必要がある。
+Androidではこの情報を取得するAPIを提供しており、Android 11では `WindowMetrics` APIが追加され、以下が非推奨となった。
+
+* `Display.getSize()`
+* `Display.getMetrics()`
+
+Android 12ではさらに`WindowMetrics`が改善され以下が非推奨となった。
+
+* `Display.getRealSize()`
+* `Display.getRealMetrics()`
+
+アプリ領域の取得にDisplay APIを使っているアプリを移行するために、Android 12では正しい情報を返すサンドボックス機構が新たに追加された。
+これにより`MediaProjection`の情報を利用しているアプリでは影響がでる可能性がある。
+
+アプリは`WindowMetrics`APIを利用すべきで現在のdensityの取得には`Configuration.densityDpi`を利用する。
+
+`WindowManager`ライブラリを利用することでAndroid 4.0以上であれば`WindowMetrics`をサポートしている。
+
+#### Examples of how to use WindowMetrics
+
+はじめにアプリのActivityは完全にリサイズ可能になっていることを確認する。
+
+UIに関係する処理はActivity Contextを使って`WindowMetrics`に頼るべきで、特に`WindowManager.getCurrentWindowMetrics()`を利用する。
+
+もしアプリが`MediaProjection`を作成する場合、ディスプレイのキャプチャなので正確なサイズとなっている必要がある。
+もし完全にリサイズ可能なActivityであれば、`getMaximumWindowMetrics()`で取得する。
+
+もしアプリが完全にリサイズ可能でない場合は、`WindowContext`から`WindowMetrics`を取得するべき。
+
+Note: `MediaProjection`を利用しているライブラリも正確な`WindowMetrics`を知る必要がある。
+
 ## Graphics and images
 
 ### Improved refresh rate switching
 
 Android 12では、ディスプレイが新しいリフレッシュレートへのシームレスな移行(1-2秒間の黒い画面など視覚的な中断がない状態)をサポートしているかどうかに関わらず、`setFrameRate()`でリフレッシュレートの変更が可能になる。これまではディスプレイが対応していない場合は`setFrameRate()`が呼び出された後も通常は同じリフレッシュレートが利用されていた。`getAlternativeRefreshRates()`を呼び出すことでシームレスに移行ができるかどうかを判断できる。通常、`onDisplayChanged()`は切り替えが完了した後に呼び出されるがシームレスではない移行時に呼び出されるものもある。
 
-## Security
+## Security and privacy
+
+### Microphone and camera toggles
+
+Android 12では、サポートされているデバイスではユーザは全てのアプリに対するカメラとマイクへのアクセスを有効・無効を切り替えることができ、Quick Settingsから簡単に操作することが可能。
+
+カメラとマイクの切り替えはデバイス上の全てのアプリに影響する。
+
+* ユーザがカメラアクセスをオフにしている場合、アプリは空のカメラ情報を受け取る
+* ユーザがマイクをオフにしている場合、アプリは無音となる。加えて`HIGH_SAMPLING_RATE_SENSORS`を宣言しているかどうかに関わらずモーションセンサーが制限される
+
+Note: ユーザが911など緊急コールを使用する際はシステムはマイクのアクセスをオンにする
+
+ユーザがカメラとマイクへのアクセスをオフにした状態でアプリを起動するとシステムはオフになっていることを示すダイアログを通知する。
+
+#### Check whether a given device supports microphone and camera toggles
+
+カメラとマイクへのアクセス状態を確認するためには`SensorPrivacyManager`を利用する。
+
+#### Check app behavior in response to microphone and camera toggles
+
+パーミッション周りのベストプラクティスに従っていればアプリには影響はないはず。
+
+特にアプリは以下に従っている必要がある。
+
+* `CAMERA`パーミッションが許可されるまでカメラアクセスを待機する
+* `RECORD_AUDIO`パーミッションが許可されるまでマイクアクセスを待機する
+
+### Microphone and camera indicators
+
+Android 12では、アプリがマイクかカメラにアクセスしている時、ステータスバーにアイコンが表示される。
+全画面モードの場合は右上にアイコンが表示される。
+ユーザはすぐにQuick Settingsを開き、どのアプリがアクセスしているのかを確認することができる。
+
+よりよいUXを提供するため、パーミッションが与えられるまではアクセスしてはならない。
+
+### Apps can't close system dialogs
+
+Android 12では、アプリとシステムとのやりとり時のユーザー操作を改善するために、いくつかの特別なケースを除き、`ACTION_CLOSE_SYSTEM_DIALOGS` はdeprecatedになり、`Intent`発行時に以下のいずれかの動作となる。
+
+* `targetSdkVersion`がAndroid 12：`SecurityException`
+* `targetSdkVersion`がAndroid 11以下：`Intent`は実行されず、Logcatにログが出力される。
+
+#### Exceptions
+
+以下のケースではAndroid 12でもシステムダイアログを閉じる
+
+* instrumentation testを実行中
+* `targetSdkVersion`が11以下で通知エリアの上部にウィンドウが表示されている
+  * Note:`targetSdkVersion`が12の場合は、システムは通知エリアを自動的に閉じるので、`ACTION_CLOSE_SYSTEM_DIALOGS`の利用は不要
+* `targetSdkVersion`が11以下で、ユーザが通知を操作しており、通知のアクションボタンを使用する可能性がある場合
 
 ### Untrusted touch events are blocked
 
@@ -135,21 +224,50 @@ adb shell am compat reset BLOCK_UNTRUSTED_TOUCHES com.example.app
 adb shell settings put global block_untrusted_touches 2
 ```
 
-### Apps can't close system dialogs
+### Permission package visibility
 
-Android 12では、アプリとシステムとのやりとり時のユーザー操作を改善するために、いくつかの特別なケースを除き、`ACTION_CLOSE_SYSTEM_DIALOGS` はdeprecatedになり、`Intent`発行時に以下のいずれかの動作となる。
+Android 12では、Android 11以上をターゲットにしているアプリが以下のAPIではpackage visibilityの制約によりフィルタされた結果が返される。
 
-* `targetSdkVersion`がAndroid 12：`SecurityException`
-* `targetSdkVersion`がAndroid 11以下：`Intent`は実行されず、Logcatにログが出力される。
+* `getAllPermissionGroups()`
+* `getPermissionGroupInfo()`
+* `getPermissionInfo()`
+* `queryPermissionsByGroup()`
 
-#### Exceptions
+### Bouncy Castle implementation removed
 
-以下のケースではAndroid 12でもシステムダイアログを閉じる
+Android 12ではAESを含む以前deprecatedになった暗号化アルゴリズムの多くを削除した。
+システムは代わりに Conscrypt を利用しこれらのアルゴリズムを実装した。
 
-* instrumentation testを実行中
-* `targetSdkVersion`が11以下で通知エリアの上部にウィンドウが表示されている
-  * Note:`targetSdkVersion`が12の場合は、システムは通知エリアを自動的に閉じるので、`ACTION_CLOSE_SYSTEM_DIALOGS`の利用は不要
-* `targetSdkVersion`が11以下で、ユーザが通知を操作しており、通知のアクションボタンを使用する可能性がある場合
+この変更により以下のアプリは影響を受ける。
+
+* 512bit長の鍵を利用している
+* 12bytes以上のサイズを利用しGCM暗号を初期化している
+
+### Clipboard access notifications
+
+Android 12ではアプリが`getPrimaryClip()`を呼び出し`ClipData`にアクセスすると、`APP pasted from your clipboard.`というトーストが表示される。
+
+#### Message doesn't appear when retrieving clip description
+
+`getPrimaryClipDescription()`を利用している場合はトーストは表示されない。
+
+Android 12では以下のAPIで中身の検出が強化された。
+
+* `isStyledText()`：スタイルされたテキストかどうか？
+* `getConfidenceScore()`：URLのような異なる分類のテキスト
+
+### Connectivity
+
+#### Passpoint updates
+
+Android 12では以下のAPIが追加された。
+
+* `isPasspointTermsAndConditionsSupported()`：Passpointの機能である`Terms and conditions`は安全ではないオープンネットワークのポータルを安全なPasspointネットワークに置き換えることができる。
+Passpointネットワークを提案するアプリはこのAPIを利用しデバイスがその機能をサポートしているかを確認する必要がある。
+* `isDecoratedIdentitySupported()`：プレフィックスの装飾が行われているネットワークに対して認証を行う場合、IDプレフィックスによりネットワーク事業者はネットワークアクセス識別子(NAI)を更新しAAAネットワーク内の複数のプロ棋士を経由した明示的なルーティングを行うことができる。(詳細はRFC 7542)
+Android 12で装飾された識別子が必要なPasspointネットワークを提案する場合、このAPIを利用しデバイスがサポートしているかどうか確認する必要がある。
+
+Passpointの提案をする場合、アプリはPasspointプロファイルが記述されている`PasspoingConfiguration`, `Credential`, `HomeSp`を利用する必要がある。
 
 ## Updated non-SDK interface restrictions
 

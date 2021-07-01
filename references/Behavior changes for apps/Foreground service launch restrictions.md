@@ -50,6 +50,8 @@ Android 12で新たに追加されたExpedited jobsはアプリが重要なタ�
 * ユーザがBubble, Notification, Widget, Activityなどアプリに関連するUIを操作した
 * geofencingやactivity recognitionに関連するイベントを受け取っている
 * デバイス再起動後にBroadcast receiverで`ACTION_BOOT_COMPLETED`, `ACTION_LOCKED_BOOT_COMPLETED`, `ACTION_MY_PACKAGE_REPLACED`を受け取っている
+* Broadcast receiverで`ACTION_TIMEZONE_CHANGED`, `ACTION_TIME_CHANGED`, `ACTION_LOCALE_CHANGED`を受け取っている
+* `BLUETOOTH_CONNECT`, `BLUETOOTH_SCAN`パミーッションが必要なBluetoothのbroadcastを受け取っている
 * device ownersやprofile ownersなどのシステムの役割や権限をもつアプリ
 * Companion Device Managerを利用している
   * コンパニオンデバイスが近くにある時にシステムがアプリを起動するためには https://developer.android.com/about/versions/12/features#keep-awake を実装する
