@@ -6,6 +6,12 @@ https://developer.android.com/about/versions/12/features
 
 ## New experiences
 
+### Widgets improvements
+
+Android 12では既存のWidget APIが刷新されユーザーや開発者の体験を向上させている。
+
+詳細は https://developer.android.com/about/versions/12/features/widgets
+
 ### Audio-coupled haptic effect
 
 Android 12のアプリでは端末のバイブレーションを使用してオーディオから触覚フィードバックを生成することができる。
@@ -22,6 +28,10 @@ Android 12ではすべてのアプリに新しいアプリ起動アニメーシ�
 Android 12では電話の着信のための`Notification.CallStyle`が追加される。このテンプレートを利用すると、ステータスバーに通話時間を示すチップが目立つように表示され、チップをタップすることで通話に戻ることができる。
 
 ユーザーにとって、着信および通話は最も重要であるためこれらの通知は最上位に表示される。またこの順位により優先順位の高い通話を他のデバイスに転送できる可能性がある。
+
+着信：`forIncomingCall()`
+発信：`forOngoingCall()`
+スクリーニング：`forScreeningCall()`
 
 ### Enriched image support for notifications
 
@@ -65,7 +75,7 @@ Android 12では、Immersive modeが簡素化されジェスチャーナビゲ�
 
 ### Quad bayer camera sensor support
 
-現在、多くのAndroid端末には、Quad/Nona Bayerパターンに代表される高解像度のカメラセンサーが搭載されており、画質や低照度清野の面で非常に高い柔軟性をそなている。Android 12ではサードパーティアプリがこれらのセンサーを最大限に活用できるようにAPIが追加された。このAPIはセンサーのユニークな動作をサポートしフル解像度または最大解像度モードとデフォルトモードで動作する際に異なるストリーム構成や組み合わせをサポートする可能性があることを考慮している。
+現在、多くのAndroid端末には、Quad/Nona Bayerパターンに代表される高解像度のカメラセンサーが搭載されており、画質や低照度性能の面で非常に高い柔軟性をそなている。Android 12ではサードパーティアプリがこれらのセンサーを最大限に活用できるようにAPIが追加された。このAPIはセンサーのユニークな動作をサポートしフル解像度または最大解像度モードとデフォルトモードで動作する際に異なるストリーム構成や組み合わせをサポートする可能性があることを考慮している。
 
 ## Graphics and images
 
@@ -80,7 +90,7 @@ AVIFの詳細については[Jake Archibaldのブログ](https://jakearchibald.c
 
 ### Easier blurs, color filters, and other effects
 
-Android 12ではブラーやカラーフィルター、シェーダーエフェクトなどの共通的なグラフィックエフェクトを適用する`RenderEffect`が新たにう追加される。
+Android 12ではブラーやカラーフィルター、シェーダーエフェクトなどの共通的なグラフィックエフェクトを適用する`RenderEffect`が新たに追加される。
 Android端末によっては処理能力の関係でサポートされない場合がある。
 
 `View.setRenderEffect(RenderEffect)`を呼び出すことによって、`View`の基礎となる`RenderNode`にエフェクトを適用することもできる。
@@ -100,6 +110,28 @@ Android 11では最初の画像のみデコード可能だった。
 Android 12では幅広いプレイヤーをサポートするAVC(H.264)にHEVC(H.265), HDR(HDR10 and HDR 10+)を自動に変換することが可能になる。
 詳細は[Compatible media transcoding](Compatible media transcoding)
 
+### Performance class
+
+Android 12から`Performance`クラスが追加された。
+`Performance`クラスはAndroidデバイス毎に定義されたハードウェア性能を特定する。
+開発者はデバイスのパフォーマンスを実行時にチェックすることでデバイス性能をフルに活用した体験を提供することができる。
+
+詳細は https://developer.android.com/about/versions/12/features/performance-class
+
+### Video encoding improvements
+
+Android 12ではビデオエンコーディングの量子化パラメータの値を制御するための標準的なキーセットが定義される。
+
+このキーはMediaFormat APIやNDK Mediaライブラリで利用できる。
+
+また、ビデオエンコーダーに品質の最低基準値が設定されたので、極端な低品質にならないことが保証される。
+
+### Audio focus
+
+Android 12から他のアプリがオーディオフォーカスを持っている間にオーディオフォーカスをリクエストするとフレームワークが再生中のアプリをフェードアウトする。
+
+詳細は https://developer.android.com/about/versions/12/features/audio-focus-improvements
+
 ### MediaDrm updates
 
 現在の`MediaDrm`にセキュアなデコーダーコンポーネントが必要か判断するには以下の手順を実行する必要がある。
@@ -111,19 +143,41 @@ Android 12では幅広いプレイヤーをサポートするAVC(H.264)にHEVC(H
 
 新たに追加された`requiresSecureDecoder(@NonNull String mime)`と`requiredSecureDecoder(@NonNull String mime, @SecurityLevel int level)`を使えばすぐに`MediaDrm`を作成することができるようになる。
 
-### Video encoding improvements
+## Security and privacy
 
-Android 12ではビデオエンコーディングの量子化パラメータの値を制御するための標準的なキーセットが定義される。
+### Bluetooth permissions
 
-このキーはMediaFormat APIやNDK Mediaライブラリで利用できる。
+Android 12では`BLUETOOTH_SCAN`, `BLUETOOTH_ADVERTISE`, `BLUETOOTH_CONNECT`パーミッションが追加される。
+これらのパーミッションは位置情報のアクセスが不要なためBluetoothデバイスとのアクセスがより簡単になる。
 
-また、ビデオエンコーダーに品質の最低基準値が設定されたので、極端な低品質にならないことが保証される。
+Note: `CompanionDeviceManager`はデバイスへの接続により合理化されたメソッドを提供する。
+このシステムはアプリに変わってペアリングのためのUIを提供する。
+ペアリングと接続の体験をよりコントロールしたい場合は新しいパーミッションを利用する。
 
-### Device chipset information
+詳細は https://developer.android.com/about/versions/12/features/bluetooth-permissions
 
-Android 12では`Build.SOC_MANUFACTURER`, `Build.SOC_MODEL` が追加された。
+### Privacy Dashboard
 
-## Security
+Android 12の端末ではシステム設定にPrivacy Dashboardが追加された。
+この画面ではユーザは位置情報、カメラ、マイクにアクセスしたタイミングを見ることができる。
+特定のデータにアクセスしたアプリがタイムラインとして表示される。
+
+アプリは位置情報、カメラ、マイクにアクセスする理由をユーザに提示することができ、この理由はPrivacy Dashboardにも表示できる。
+
+#### Show rationale for data access
+
+位置情報、カメラ、マイクへアクセスする理由を説明するために以下のステップに従う必要がある。
+
+* ユーザ説明用のActivityを追加する
+* Intent Filterを追加する
+* ユーザ説明用のActivityに何を表示すべきかを決定する
+  * `ACTION_VIEW_PERMISSION_USAGE`を実行するとアプリは`EXTRA_PEMRMISSION_GROUP_NAME`の値を取得することができる
+  * `ACTION_VIEW_PERMISSION_USAGE_FOR_PERIOD`を実行するとアプリは`EXTRA_PERMISSION_GROUP_NAME`, `EXTRA_ATTRIBUTION_TAGS`, `EXTRA_START_TIME`, `EXTRA_END_TIME`の値を取得できる
+
+追加したintent filterに従ってユーザが情報にアクセスするためのアイコンが表示される。
+
+* `VIEW_PERMISSION_USAGE`：システム設定のアプリのパーミッション画面にアイコンが追加される
+* `VIEW_PERMISSION_USAGE_FOR_PERIOD`：Privacy Dashboardのアプリ名の横にアイコンが追加される
 
 ### Hide application overlay windows
 
@@ -191,9 +245,66 @@ Wi-Fi認識に関するいくつかの改善が追加される。
 * NAN Data Pathsのセットアップが変更され、より効果的になる
 * リソース不足により接続要求をフレームワークが拒否しないように、`WifiAwareManager.getAvailableAwareResources()`を利用することが可能になる
 
-### STA+STA connectivity support
+### Concurrent Peer-to-Peer + Internet Connection
 
 Android 12以降を対象としたデバイスが P2P接続を利用すると、接続を作成する際に既存のWi-Fi接続が切断されなくなる。
 この機能がサポートされているかどうかは `WifiManager.isMultiStaConcurrencySupported()` を利用する。
 
 メモ：STA = more concurrent stations
+
+## Storage
+
+### New directory for voice recordings
+
+システムが認識した音声ファイルを保存するために`Environment.DIRECTORY_RECORDINGS`フォルダーが追加された。
+アプリがこれらのファイルにアクセスするためには、`IS_RECORDING`フラグを使って探す必要がある。
+
+### Media management access
+
+ユーザはメディアファイルを編集するような特定のメディア管理アプリを信頼しているかもしれない。
+`targetSdkVersion`がAndroid 11でデフォルトのギャラリーアプリがないデバイスでは、ファイルの修正、削除のたびに確認ダイアログを表示する必要があった。
+
+`targetSdkVersion`がAndroid 12ではユーザに確認ダイアログの表示なしに以下の操作を可能とする権限を与えることができる。
+
+* `createWriteRequest()`でのファイルの修正
+* `createTrashRequest()`でのファイルのゴミ箱からの移動
+* `createDeleteRequest()`でのファイルの削除
+
+これをするためには以下のステップに従う必要がある。
+
+* `MANAGE_MEDIA`パーミッションと`READ_EXTERNAL_STORAGE`パーミッションをマニフェストファイルに定義
+  * 確認ダイアログなしに操作するために`ACCESS_MEDIA_LOCATION`も同様に定義
+* アプリ内でパーミッションが必要なのかを説明するUIを用意する
+* `ACCESS_REQUEST_MANAGE_MEDIA`を実行し、システム設定のMedia management apps画面へ遷移させる
+
+### App storage access
+
+アプリはユーザのデバイス上でアプリが保存しているデータを管理するActivityの定義、作成ができる。
+アプリは`android:manageSpaceActivity`を利用することでカスタムした`manage space`Activityを定義する。
+File ManagerアプリはこのActivityを`android:exported=false`担っていても呼び出すことができる。
+
+Android 12では`MANAGE_EXTERNAL_STORAGE`, `QUERY_ALL_PACKAGES`パッケージ両方を持ったアプリは`getManageSpaceActivityIntent()`を利用することができ、他のアプリが定義した`manage space`Activityを送信することができる。
+
+`getManageSpaceActivityIntent()`はパッケージ名とリクエストコードを渡すことで以下のいずれかを受け取る。
+
+* `PendingIntent`：`manage space`Activityが定義されたアプリでは該当画面へ遷移するための`PendingIntent`が返される
+* `null`：`manage space`Activityが定義されてない場合
+
+### Extended file access support
+
+`getMediaUri()`メソッドが既存の`ExternalStorageProvider`に加えて`MediaDocumentsProvider`もサポートするようになった。
+システムはこれらを返す前に呼び出し側にこれらのURIsに対して許可をあたえる。
+
+加えて`createWriteRequest()`によって許可されたURIsは`File`をサポートする。
+これらのAPIはファイルの読み込み、書き込み、リネーム、削除機能を提供する。
+
+## Core functionality
+
+### Automatic app updates
+
+Android 12では`PackageInstaller`APIを利用するアプリのために`setRequireUserAction()`メソッドが追加された。
+このメソッドはユーザの確認なしにインストーラーアプリにアプリ更新を実行を可能にする。
+
+### Device chipset information
+
+Android 12では`Build.SOC_MANUFACTURER`, `Build.SOC_MODEL` が追加された。
