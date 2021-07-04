@@ -59,11 +59,11 @@ class MainActivity : AppCompatActivity(), ViewTreeObserver.OnPreDrawListener {
     }
 
     override fun onPreDraw(): Boolean {
-        if (viewModel.isReady.value == true) {
+        return if (viewModel.isReady.value == true) {
             content.viewTreeObserver.removeOnPreDrawListener(this)
-            return true
+            true
         } else {
-            return false
+            false
         }
     }
 
