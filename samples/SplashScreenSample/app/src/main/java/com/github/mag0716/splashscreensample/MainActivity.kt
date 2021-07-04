@@ -67,6 +67,12 @@ class MainActivity : AppCompatActivity(), ViewTreeObserver.OnPreDrawListener {
         }
     }
 
+    // スプラッシュ画面表示中はバックキーのイベントが飛んでこない
+    override fun onBackPressed() {
+        Log.d(TAG, "onBackPressed")
+        super.onBackPressed()
+    }
+
     private fun showRetryError() {
         // スプラッシュ画面表示中はダイアログは表示できない
 //        AlertDialog.Builder(this)
