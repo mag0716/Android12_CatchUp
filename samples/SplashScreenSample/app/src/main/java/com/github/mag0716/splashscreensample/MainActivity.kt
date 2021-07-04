@@ -4,6 +4,7 @@ import android.os.Bundle
 import android.util.Log
 import android.view.View
 import android.view.ViewTreeObserver
+import android.widget.Toast
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 
@@ -19,6 +20,12 @@ class MainActivity : AppCompatActivity(), ViewTreeObserver.OnPreDrawListener {
         setContentView(R.layout.activity_main)
         content = findViewById(android.R.id.content)
         content.viewTreeObserver.addOnPreDrawListener(this)
+
+        viewModel.hasError.observe(this) { hasError ->
+            if (hasError) {
+                showRetryError()
+            }
+        }
 
         if (savedInstanceState == null) {
             viewModel.init()
@@ -58,6 +65,20 @@ class MainActivity : AppCompatActivity(), ViewTreeObserver.OnPreDrawListener {
         } else {
             return false
         }
+    }
+
+    private fun showRetryError() {
+        // スプラッシュ画面表示中はダイアログは表示できない
+//        AlertDialog.Builder(this)
+//            .setTitle("Error")
+//            .setMessage("Please Retry")
+//            .setPositiveButton("retry") { _, _ ->
+//                viewModel.retry()
+//            }
+//            .create()
+//            .show()
+
+        Toast.makeText(this, "retry", Toast.LENGTH_LONG).show()
     }
 
     companion object {

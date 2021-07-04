@@ -12,7 +12,18 @@ class MainViewModel : ViewModel() {
     private val _isReady = MutableLiveData<Boolean>()
     val isReady: LiveData<Boolean> = _isReady
 
+    private val _hasError = MutableLiveData<Boolean>()
+    val hasError: LiveData<Boolean> = _hasError
+
     fun init() {
+        viewModelScope.launch {
+            delay(5000)
+            _hasError.value = true
+        }
+    }
+
+    fun retry() {
+        _hasError.value = false
         viewModelScope.launch {
             delay(5000)
             _isReady.value = true
