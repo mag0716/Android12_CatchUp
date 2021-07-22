@@ -8,7 +8,7 @@ https://developer.android.com/about/versions/12/behavior-changes-12
 
 Android 12ではPicture-in-pictureモードの動作が改善される。詳細は https://developer.android.com/about/versions/12/features/pip-improvements を参照。
 
-### Custom notification deprecation
+### Custom notifications
 
 Android 12では全てのカスタムNotificationの見た目が変更される。
 以前は通知領域全体をカスタマイズできたので、ユーザーを混乱させたり異なるデバイス上でのレイアウトの互換性の問題を引き起こすアンチパターンとなっていた。
@@ -198,7 +198,11 @@ mutabilityフラグの指定がない場合は、`IllegalArgumentException`と�
 ただ以下のようなケースではミュータブルな`PendingIntent`で生成する必要がある。
 
 * `PendingIntent`内のクリップデータの変更を要求するdirect reply actionを持った`Notification`
+* `CarAppExtendor`を利用したAndroid Auto Framework関連の`Notification`
 * システムが`FLAG_ACTIVITY_MULTIPLE_TASK`や`FLAG_ACTIVITY_NEW_DOCUMENT`を適用する `Bubbles`
+* `requestLocationUpdates()`などのAPIを呼び出すことでの位置情報のリクエスト
+* `AlarmManager`でのアラームのスケジューリング
+  * mutableだと`EXTRA_ALARM_COUNT`の追加が可能になる
 
 他のアプリが`PendingIntent`を呼び出す際に同じコンポーネントが起動するように、ミュータブルな`PendingIntent`を生成する場合は明示的Intentの利用が強く推奨される。
 
@@ -246,6 +250,15 @@ Note：`detectAll()`を呼び出せば、`detectUnsafeIntentLaunch()`も自動�
 ### Exact alarm permission
 
 アプリがシステムリソースを節約することを推奨するため、`targetSdkVersion`がAndroid 12のアプリでは正確なアラームを設定するためには`SCHEDULE_EXACT_ALARM`パーミッションを持つ必要があり、パーミッションがない場合は`SecurityException`となる。
+
+正確なアラームはユーザが直面する機能でのみ利用すべき。
+
+ユーザとシステムは`Alarm & reminders`の特別なアプリアクセスを取り消すことができ、取り消すとアプリは停止しアラームはキャンセルされる。
+
+`Alarm & reminders`が許可されると、システムは`ACTION_SCHEDULE_EXACT_ALARM_PERMISSION_STATE_CHANGED`が通知されるので、アプリは以下に従って`BroadcastReceiver`を実装する必要がある。
+
+1. `canScheduleExactAlarms()`を呼び出すことでアプリが権限があるかを確認する
+1. アプリは必要があれば現在の状態に従ってリスケジュールする。`ACTION_BOOT_COMPLETED`を受け取った時にもリスケジュールしておく必要がある。
 
 Caution： アプリが設定したアラームをシステムが正確にトリガーしようとするとデバイスはDozeから離脱するためバッテリーなどリソースを大量に消費する。さらにシステムはこれらの要求をバッチ処理として扱うことができない。
 

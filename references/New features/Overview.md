@@ -6,6 +6,22 @@ https://developer.android.com/about/versions/12/features
 
 ## New experiences
 
+### Game Mode
+
+[Game Mode API](https://developer.android.com/games/gamemode/gamemode-api)と[Game Mode Interventions](https://developer.android.com/games/gamemode/gamemode-interventions)を利用することでユーザやゲームの設定によってパフォーマンスやバッテリー消費などゲームプレイを最適化することができる。
+
+詳細は https://developer.android.com/games/gamemode
+
+### AppSearch
+
+システムサービスとしてハイパフォーマンスなデバイス上の検索エンジンを`AppSearch`で提供される。
+`AppSearch`はアプリが構造化されたデータをインデックス化しフルテキスト検索機能を可能にし、高効率なインデックス作成や検索、多言語サポート、関連性ランキングなどのネイティブ検索機能をサポートしている
+
+`AppSearch`は旧バージョンの互換性のあるローカルインデックスと、システム全体で管理されるセントラルインデックスの2種類がある。セントラルインデックスを使用すると、システムにプリインされているコンポーネントによってアプリのデータがシステムのUIに表示されるようになる。どのデータを表示するかはOEMに依存する。アプリは他のアプリとデータを安全に共有し、検索することが可能となる。
+
+詳細は https://developer.android.com/guide/topics/search/appsearch
+https://developer.android.com/jetpack/androidx/releases/appsearch を利用することで開発者フレンドリーなAPIが提供される。
+
 ### Widgets improvements
 
 Android 12では既存のWidget APIが刷新されユーザーや開発者の体験を向上させている。
@@ -70,6 +86,11 @@ Android 12では、Immersive modeが簡素化されジェスチャーナビゲ�
 
 クリップボード、キーボードやドラッグアンドドロップでリッチなコンテンツを受け取れる unified API が追加される。
 詳細は[Unified API for receiving content](https://developer.android.com/about/versions/12/features/unified-content-api)
+
+### Recents URL sharing
+
+ユーザは最近閲覧したウェブコンテンツのリンクを`Recents`から直接共有できるようになった。
+アプリは`onProvideAssistContent()`をオーバーライドすることでユーザに`Recents`のリンクを有効にすることができる。
 
 ## Camera
 
@@ -168,9 +189,9 @@ Android 12の端末ではシステム設定にPrivacy Dashboardが追加され�
 
 位置情報、カメラ、マイクへアクセスする理由を説明するために以下のステップに従う必要がある。
 
-* ユーザ説明用のActivityを追加する
-* Intent Filterを追加する
-* ユーザ説明用のActivityに何を表示すべきかを決定する
+1. ユーザ説明用のActivityを追加する
+1. Intent Filterを追加する
+1. ユーザ説明用のActivityに何を表示すべきかを決定する
   * `ACTION_VIEW_PERMISSION_USAGE`を実行するとアプリは`EXTRA_PEMRMISSION_GROUP_NAME`の値を取得することができる
   * `ACTION_VIEW_PERMISSION_USAGE_FOR_PERIOD`を実行するとアプリは`EXTRA_PERMISSION_GROUP_NAME`, `EXTRA_ATTRIBUTION_TAGS`, `EXTRA_START_TIME`, `EXTRA_END_TIME`の値を取得できる
 
@@ -178,6 +199,15 @@ Android 12の端末ではシステム設定にPrivacy Dashboardが追加され�
 
 * `VIEW_PERMISSION_USAGE`：システム設定のアプリのパーミッション画面にアイコンが追加される
 * `VIEW_PERMISSION_USAGE_FOR_PERIOD`：Privacy Dashboardのアプリ名の横にアイコンが追加される
+
+### Permission group lookup
+
+Android 12ではプラットフォームが提供するパーミッションをシステムがどのようにグループにまとめているかを問い合わせることができる。
+
+* `getGroupOfPlatformPermission()`でシステムがどのグループに入れたかを調べる
+* `getPlatformPermissionsForGroup()`でシステムが特定グループに入れたパーミッションを調べる
+
+Note：原則としてパーミッションが特定のグループに必ず入っていると仮定せず、上記のAPIを利用して確認する
 
 ### Hide application overlay windows
 
